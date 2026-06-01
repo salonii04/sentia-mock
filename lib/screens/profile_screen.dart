@@ -52,12 +52,12 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   /// Selected day for highlight ring — defaults to June 3 (the diary day).
-  int _selectedDay = 3;
+  int _selectedDay = 2;
   bool _isLoggingOut = false;
 
   void _onDayTap(int day) {
     setState(() => _selectedDay = day);
-    if (day == 2 || day == 3) {
+    if (day == 2) {
       DiaryModal.show(
         context,
         entryText: getDiaryEntry(widget.conversationMood),
@@ -274,11 +274,9 @@ class _StatsCard extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _StatItem(emoji: '🔥', value: '10', label: 'Streak'),
+          _StatItem(emoji: '🔥', value: '3', label: 'Streak'),
           _StatDivider(),
           _StatItem(emoji: '🌱', value: '$currentSeeds', label: 'Seeds'),
-          _StatDivider(),
-          _StatItem(emoji: '💎', value: '50', label: 'Points'),
         ],
       ),
     );
@@ -481,7 +479,7 @@ class _JuneCalendarGrid extends StatelessWidget {
               final cellColor =
                   mood != null ? colorForMood(mood) : const Color(0xFFEEEEEE);
               final isSelected = dayNum == selectedDay;
-              final isDiaryDay = dayNum == 3;
+              final isDiaryDay = dayNum == 2;
 
               return GestureDetector(
                 onTap: () => onDayTap(dayNum),
@@ -537,7 +535,7 @@ class _JuneCalendarGrid extends StatelessWidget {
               ),
               const SizedBox(width: 7),
               Text(
-                'Tap June 2 or June 3 to read your diary entry',
+                'Tap June 2 to read your diary entry',
                 style: TextStyle(
                   fontFamily: 'Nunito',
                   fontSize: 10.5,

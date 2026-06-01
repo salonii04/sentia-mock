@@ -114,7 +114,7 @@ class DiaryModal extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'June 3rd, 2025',
+                              'June 2nd, 2026',
                               style: TextStyle(
                                 fontFamily: 'Nunito',
                                 fontSize: 13,
