@@ -117,7 +117,6 @@ class _SentiaShellState extends State<SentiaShell> {
 
   int _currentTab = 1; // 0=Garden, 1=Home, 2=Profile
   int _currentSeeds = SeedService.initialSeeds;
-  List<String> _boughtFlowers = [];
 
   String? _selectedFlowerToPlant;
   List<PlantedFlower> _plantedFlowersList = [];
@@ -155,9 +154,9 @@ class _SentiaShellState extends State<SentiaShell> {
     final updatedSeeds = _currentSeeds - cost;
     setState(() {
       _currentSeeds = updatedSeeds;
-      if (!_boughtFlowers.contains(flower)) {
-        _boughtFlowers = List.from(_boughtFlowers)..add(flower);
-      }
+      // selectedFlowerToPlant activates planting mode for this flower type.
+      // A unique ID is generated at tap time in garden_screen.dart so the
+      // same type can be planted multiple times without state collision.
       _selectedFlowerToPlant = flower;
     });
     _seedService.setCurrentSeeds(updatedSeeds);
@@ -245,7 +244,7 @@ class _SentiaShellState extends State<SentiaShell> {
       case 0:
         return GardenScreen(
           currentSeeds: _currentSeeds,
-          boughtFlowers: _boughtFlowers,
+          boughtFlowers: const [],
           plantedFlowers: _plantedFlowersList,
           selectedFlowerToPlant: _selectedFlowerToPlant,
           conversationMood: _conversationMood,
