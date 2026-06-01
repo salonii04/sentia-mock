@@ -32,10 +32,18 @@ String getDiaryEntry(ConversationMood mood) {
 class ProfileScreen extends StatefulWidget {
   /// The active conversation mood — used to resolve the June 3 diary entry.
   final ConversationMood conversationMood;
+  final int currentSeeds;
+  final String username;
+  final bool isLoggedIn;
+  final Future<void> Function() onLogout;
 
   const ProfileScreen({
     super.key,
     required this.conversationMood,
+    required this.currentSeeds,
+    required this.username,
+    required this.isLoggedIn,
+    required this.onLogout,
   });
 
   @override
@@ -45,16 +53,24 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   /// Selected day for highlight ring — defaults to June 3 (the diary day).
   int _selectedDay = 3;
+  bool _isLoggingOut = false;
 
   void _onDayTap(int day) {
     setState(() => _selectedDay = day);
-    if (day == 3) {
+    if (day == 2 || day == 3) {
       DiaryModal.show(
         context,
         entryText: getDiaryEntry(widget.conversationMood),
         onSave: () {}, // preserves all state — no resets triggered
       );
     }
+  }
+
+  Future<void> _handleLogout() async {
+    setState(() => _isLoggingOut = true);
+    await widget.onLogout();
+    if (!mounted) return;
+    setState(() => _isLoggingOut = false);
   }
 
   @override
@@ -78,9 +94,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              _ProfileHeader(),
+              _ProfileHeader(username: widget.username),
               const SizedBox(height: 20),
-              _StatsCard(),
+              _StatsCard(currentSeeds: widget.currentSeeds),
+              const SizedBox(height: 16),
+              _SessionCard(
+                isLoggedIn: widget.isLoggedIn,
+                isLoggingOut: _isLoggingOut,
+                onLogout: _handleLogout,
+              ),
               const SizedBox(height: 24),
               // Activity section label
               Row(
@@ -96,7 +118,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '• June 2025',
+                    '• June 2026',
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 14,
@@ -136,6 +158,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ProfileHeader extends StatelessWidget {
+  final String username;
+
+  const _ProfileHeader({required this.username});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -170,7 +196,7 @@ class _ProfileHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '@Marionette',
+                '@$username',
                 style: TextStyle(
                   fontFamily: 'Nunito',
                   fontSize: 20,
@@ -187,7 +213,7 @@ class _ProfileHeader extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  'JOINED 2025',
+                  'JOINED 2026',
                   style: TextStyle(
                     fontFamily: 'Nunito',
                     fontSize: 11,
@@ -222,6 +248,10 @@ class _ProfileHeader extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _StatsCard extends StatelessWidget {
+  final int currentSeeds;
+
+  const _StatsCard({required this.currentSeeds});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -243,10 +273,10 @@ class _StatsCard extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: const [
+        children: [
           _StatItem(emoji: '🔥', value: '10', label: 'Streak'),
           _StatDivider(),
-          _StatItem(emoji: '🌱', value: '420', label: 'Seeds'),
+          _StatItem(emoji: '🌱', value: '$currentSeeds', label: 'Seeds'),
           _StatDivider(),
           _StatItem(emoji: '💎', value: '50', label: 'Points'),
         ],
@@ -300,12 +330,97 @@ class _StatDivider extends StatelessWidget {
 // June 2025 calendar grid
 // ─────────────────────────────────────────────────────────────────────────────
 
+class _SessionCard extends StatelessWidget {
+  final bool isLoggedIn;
+  final bool isLoggingOut;
+  final Future<void> Function() onLogout;
+
+  const _SessionCard({
+    required this.isLoggedIn,
+    required this.isLoggingOut,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final statusText = isLoggedIn ? 'Logged in' : 'Logged out';
+    final statusColor = isLoggedIn ? AppColors.sageGreen : Colors.redAccent;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Session',
+                  style: TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.darkGreenText,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  statusText,
+                  style: TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: statusColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: isLoggingOut ? null : onLogout,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.deepForest,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: isLoggingOut
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    'Logout',
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _JuneCalendarGrid extends StatelessWidget {
   final int selectedDay;
   final Function(int day) onDayTap;
 
-  const _JuneCalendarGrid(
-      {required this.selectedDay, required this.onDayTap});
+  const _JuneCalendarGrid({required this.selectedDay, required this.onDayTap});
 
   @override
   Widget build(BuildContext context) {
@@ -363,9 +478,8 @@ class _JuneCalendarGrid extends StatelessWidget {
               if (i < _kJuneLeadingBlanks) return const SizedBox.shrink();
               final dayNum = i - _kJuneLeadingBlanks + 1;
               final mood = kJuneMoodMap[dayNum];
-              final cellColor = mood != null
-                  ? colorForMood(mood)
-                  : const Color(0xFFEEEEEE);
+              final cellColor =
+                  mood != null ? colorForMood(mood) : const Color(0xFFEEEEEE);
               final isSelected = dayNum == selectedDay;
               final isDiaryDay = dayNum == 3;
 
@@ -379,8 +493,7 @@ class _JuneCalendarGrid extends StatelessWidget {
                     border: isSelected
                         ? Border.all(color: Colors.white, width: 2.5)
                         : isDiaryDay
-                            ? Border.all(
-                                color: AppColors.deepForest, width: 2)
+                            ? Border.all(color: AppColors.deepForest, width: 2)
                             : null,
                     boxShadow: isSelected
                         ? [
@@ -419,13 +532,12 @@ class _JuneCalendarGrid extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: colorForMood(Mood.sad),
                   borderRadius: BorderRadius.circular(4),
-                  border:
-                      Border.all(color: AppColors.deepForest, width: 1.5),
+                  border: Border.all(color: AppColors.deepForest, width: 1.5),
                 ),
               ),
               const SizedBox(width: 7),
               Text(
-                'Tap June 3 to read your diary entry',
+                'Tap June 2 or June 3 to read your diary entry',
                 style: TextStyle(
                   fontFamily: 'Nunito',
                   fontSize: 10.5,
@@ -455,8 +567,7 @@ class _MoodLegendRow extends StatelessWidget {
         children: kMoodLegend.map((info) {
           return Container(
             margin: const EdgeInsets.only(right: 10),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(18),
@@ -467,8 +578,8 @@ class _MoodLegendRow extends StatelessWidget {
                   offset: const Offset(0, 3),
                 ),
               ],
-              border: Border.all(
-                  color: info.color.withOpacity(0.35), width: 1.5),
+              border:
+                  Border.all(color: info.color.withOpacity(0.35), width: 1.5),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -482,8 +593,7 @@ class _MoodLegendRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 7),
-                Text(info.emoji,
-                    style: const TextStyle(fontSize: 16)),
+                Text(info.emoji, style: const TextStyle(fontSize: 16)),
                 const SizedBox(width: 5),
                 Text(
                   info.label,

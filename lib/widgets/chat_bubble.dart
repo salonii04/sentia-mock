@@ -9,10 +9,15 @@ class ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (message.isReward) {
+      return _RewardBubble(message: message);
+    }
     if (message.isTyping) {
       return _TypingBubble();
     }
-    return message.isUser ? _UserBubble(message: message) : _AIBubble(message: message);
+    return message.isUser
+        ? _UserBubble(message: message)
+        : _AIBubble(message: message);
   }
 }
 
@@ -146,6 +151,151 @@ class _UserBubble extends StatelessWidget {
   }
 }
 
+class _RewardBubble extends StatefulWidget {
+  final Message message;
+
+  const _RewardBubble({required this.message});
+
+  @override
+  State<_RewardBubble> createState() => _RewardBubbleState();
+}
+
+class _RewardBubbleState extends State<_RewardBubble>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    )..forward();
+    _opacity = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    _scale = Tween<double>(begin: 0.96, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rewardData = widget.message.rewardData;
+    if (rewardData == null) return const SizedBox.shrink();
+
+    return FadeTransition(
+      opacity: _opacity,
+      child: ScaleTransition(
+        scale: _scale,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 16, right: 48),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                margin: const EdgeInsets.only(right: 8, top: 2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFE5F5E6),
+                  border: Border.all(
+                    color: const Color(0xFF5A8C5E).withOpacity(0.45),
+                    width: 1.2,
+                  ),
+                ),
+                child: const Center(
+                  child: Text('🌱', style: TextStyle(fontSize: 16)),
+                ),
+              ),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF70A774), Color(0xFF4C8550)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                      bottomLeft: Radius.circular(4),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF2D4A2F).withOpacity(0.22),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: rewardData.awarded
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '🌱 Reflection Reward Earned',
+                              style: TextStyle(
+                                fontFamily: 'Nunito',
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '+${rewardData.grantedSeeds} Seeds',
+                              style: const TextStyle(
+                                fontFamily: 'Nunito',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${rewardData.previousSeeds} → ${rewardData.updatedSeeds}',
+                              style: TextStyle(
+                                fontFamily: 'Nunito',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          rewardData.message,
+                          style: const TextStyle(
+                            fontFamily: 'Nunito',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1.4,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TypingBubble extends StatefulWidget {
   @override
   State<_TypingBubble> createState() => _TypingBubbleState();
@@ -213,7 +363,8 @@ class _TypingBubbleState extends State<_TypingBubble>
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: List.generate(3, (i) => _Dot(controller: _controller, delay: i * 0.33)),
+              children: List.generate(
+                  3, (i) => _Dot(controller: _controller, delay: i * 0.33)),
             ),
           ),
         ],
