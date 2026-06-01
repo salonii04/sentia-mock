@@ -129,7 +129,12 @@ class _GardenScreenState extends State<GardenScreen>
         (details.localPosition.dx / constraints.maxWidth).clamp(0.05, 0.95);
     final ny =
         (details.localPosition.dy / constraints.maxHeight).clamp(0.25, 0.88);
+    // Generate a unique ID per planting action so duplicate flower types
+    // are always treated as independent instances by Flutter's widget tree.
+    final uniqueId =
+        '${widget.selectedFlowerToPlant}_${DateTime.now().millisecondsSinceEpoch}';
     widget.onPlantFlower(PlantedFlower(
+      id: uniqueId,
       flowerType: widget.selectedFlowerToPlant!,
       normalizedX: nx,
       normalizedY: ny,
@@ -140,7 +145,10 @@ class _GardenScreenState extends State<GardenScreen>
     if (widget.selectedFlowerToPlant == null) return;
     final idx = widget.plantedFlowers.length % _kFallbackSlots.length;
     final slot = _kFallbackSlots[idx];
+    final uniqueId =
+        '${widget.selectedFlowerToPlant}_${DateTime.now().millisecondsSinceEpoch}';
     widget.onPlantFlower(PlantedFlower(
+      id: uniqueId,
       flowerType: widget.selectedFlowerToPlant!,
       normalizedX: slot.dx,
       normalizedY: slot.dy,
@@ -229,9 +237,9 @@ class _GardenScreenState extends State<GardenScreen>
                   final top =
                       f.normalizedY * constraints.maxHeight - flowerSize;
                   return Positioned(
+                    key: Key(f.id), // Unique key per instance — prevents widget reuse across same flower types
                     left: left.clamp(0.0, constraints.maxWidth - flowerSize),
                     top: top.clamp(0.0, constraints.maxHeight - flowerSize),
-                    // Flowers sit on top of whichever overlay is active.
                     child: _AnimatedPlantedFlower(flower: f),
                   );
                 }).toList(),

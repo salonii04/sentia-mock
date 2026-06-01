@@ -132,10 +132,8 @@ class GardenShopSheet extends StatelessWidget {
                   itemCount: flowers.length,
                   itemBuilder: (_, i) {
                     final flower = flowers[i];
-                    final alreadyBought = boughtFlowers.contains(flower.name);
                     return _FlowerListItem(
                       flower: flower,
-                      alreadyBought: alreadyBought,
                       canAfford: currentSeeds >= flower.cost,
                       onBuy: () => onBuy(flower.name, flower.cost),
                     );
@@ -197,13 +195,11 @@ class _FlowerPreviewCard extends StatelessWidget {
 
 class _FlowerListItem extends StatelessWidget {
   final _FlowerItem flower;
-  final bool alreadyBought;
   final bool canAfford;
   final VoidCallback onBuy;
 
   const _FlowerListItem({
     required this.flower,
-    required this.alreadyBought,
     required this.canAfford,
     required this.onBuy,
   });
@@ -224,9 +220,7 @@ class _FlowerListItem extends StatelessWidget {
           ),
         ],
         border: Border.all(
-          color: alreadyBought
-              ? AppColors.sageGreen.withOpacity(0.4)
-              : AppColors.divider,
+          color: AppColors.divider,
           width: 1,
         ),
       ),
@@ -286,49 +280,31 @@ class _FlowerListItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          if (alreadyBought)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          GestureDetector(
+            onTap: canAfford ? onBuy : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.sageGreen.withOpacity(0.15),
+                gradient: canAfford
+                    ? const LinearGradient(
+                        colors: [Color(0xFF5A8C5E), Color(0xFF3A6B3F)],
+                      )
+                    : null,
+                color: canAfford ? null : AppColors.divider,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Text(
-                '✓ Planted',
+              child: Text(
+                'Buy',
                 style: TextStyle(
                   fontFamily: 'Nunito',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.sageGreen,
-                ),
-              ),
-            )
-          else
-            GestureDetector(
-              onTap: canAfford ? onBuy : null,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  gradient: canAfford
-                      ? const LinearGradient(
-                          colors: [Color(0xFF5A8C5E), Color(0xFF3A6B3F)],
-                        )
-                      : null,
-                  color: canAfford ? null : AppColors.divider,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Buy',
-                  style: TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: canAfford ? Colors.white : AppColors.earthBrown,
-                  ),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: canAfford ? Colors.white : AppColors.earthBrown,
                 ),
               ),
             ),
+          ),
         ],
       ),
     );
