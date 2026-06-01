@@ -55,8 +55,8 @@ class _RainbowOverlayState extends State<RainbowOverlay>
         AnimatedBuilder(
           animation: _glowCtrl,
           builder: (_, __) => Container(
-            color:
-                const Color(0xFFFFE066).withOpacity(0.055 + 0.03 * _glowCtrl.value),
+            color: const Color(0xFFFFE066)
+                .withOpacity(0.055 + 0.03 * _glowCtrl.value),
           ),
         ),
 
@@ -112,6 +112,7 @@ class _RainbowArcPainter extends CustomPainter {
   final double opacity;
   const _RainbowArcPainter({required this.opacity});
 
+  // Ordered from outermost band to innermost band.
   static const _colors = [
     Color(0xFFFF2222), // red
     Color(0xFFFF8800), // orange
@@ -128,17 +129,19 @@ class _RainbowArcPainter extends CustomPainter {
     //   Radius ≈ 60% of width → arc peaks near the top of the screen and
     //   touches the left/right edges, giving a classic rainbow silhouette.
     final cx = size.width * 0.50;
-    final cy = size.height * 0.52;
-    final baseRadius = size.width * 0.60;
+    final cy = size.height * 1.08;
+    final baseRadius = size.width * 0.92;
+    const bandWidth = 12.0;
+    const bandGap = 13.5;
 
     for (int i = 0; i < _colors.length; i++) {
       final paint = Paint()
-        ..color = _colors[i].withOpacity(opacity * 0.34)
+        ..color = _colors[i].withOpacity(opacity * 0.36)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 13.5
+        ..strokeWidth = bandWidth
         ..strokeCap = StrokeCap.round;
 
-      final radius = baseRadius - i * 15.0;
+      final radius = baseRadius - i * bandGap;
       final rect = Rect.fromCenter(
         center: Offset(cx, cy),
         width: radius * 2,

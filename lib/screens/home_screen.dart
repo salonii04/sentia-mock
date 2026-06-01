@@ -31,7 +31,12 @@ const _kFallbackReply =
 // ─────────────────────────────────────────────────────────────────────────────
 
 const _kSadKeywords = ['miserable', 'failed', 'parents', 'ridiculous'];
-const _kHappyKeywords = ["won't believe it", 'proposal', 'approved', 'feedback'];
+const _kHappyKeywords = [
+  "won't believe it",
+  'proposal',
+  'approved',
+  'feedback'
+];
 
 /// Scans [text] for route keywords and returns the matched [ConversationMood].
 /// Returns [ConversationMood.neutral] if no keyword is found.
@@ -60,6 +65,8 @@ class HomeScreen extends StatefulWidget {
 
   /// Propagates the detected mood to SentiaShell → GardenScreen overlay.
   final Function(ConversationMood) onConversationMoodChanged;
+  final Future<RewardMessageData> Function(ConversationMood)
+      onConversationCompleted;
 
   const HomeScreen({
     super.key,
@@ -67,6 +74,7 @@ class HomeScreen extends StatefulWidget {
     required this.messages,
     required this.onMessagesChanged,
     required this.onConversationMoodChanged,
+    required this.onConversationCompleted,
   });
 
   @override
@@ -191,10 +199,11 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
 
     // ── Pip response bubble ────────────────────────────────────────────────
-    widget.onMessagesChanged([
+    final messagesWithReply = [
       ...base,
       Message(text: reply, isUser: false),
-    ]);
+    ];
+    widget.onMessagesChanged(messagesWithReply);
 
     setState(() {
       _isTyping = false;
@@ -203,6 +212,23 @@ class _HomeScreenState extends State<HomeScreen> {
         _branchComplete = nowComplete;
       }
     });
+
+    if (nowComplete && _activeBranch != ConversationMood.neutral) {
+      final rewardData = await widget.onConversationCompleted(_activeBranch);
+      if (!mounted) return;
+
+      final rewardText = rewardData.awarded
+          ? '🌱 Reflection Reward Earned'
+          : "You've already earned today's seeds.";
+      widget.onMessagesChanged([
+        ...messagesWithReply,
+        Message(
+          text: rewardText,
+          isUser: false,
+          rewardData: rewardData,
+        ),
+      ]);
+    }
 
     await Future.delayed(const Duration(milliseconds: 260));
     if (mounted) _scrollToBottom();
@@ -288,14 +314,15 @@ class _HomeScreenState extends State<HomeScreen> {
               child: ListView.builder(
                 controller: _scrollController,
                 padding: EdgeInsets.fromLTRB(
-                  16, 12, 16, bottomPad > 0 ? bottomPad + 80 : 100,
+                  16,
+                  12,
+                  16,
+                  bottomPad > 0 ? bottomPad + 80 : 100,
                 ),
                 itemCount: widget.messages.length,
-                itemBuilder: (_, i) =>
-                    ChatBubble(message: widget.messages[i]),
+                itemBuilder: (_, i) => ChatBubble(message: widget.messages[i]),
               ),
             ),
-
 
             // Input bar — always free-text; disabled only while Pip is typing
             _ChatInput(
@@ -409,7 +436,6 @@ class _RouteHintBanner extends StatelessWidget {
   }
 }
 
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Chat input bar
 // ─────────────────────────────────────────────────────────────────────────────
@@ -434,7 +460,8 @@ class _ChatInput extends StatelessWidget {
   String get _hint {
     if (branchComplete) return 'Conversation complete ✨';
     if (isTyping) return 'Pip is typing…';
-    if (activeBranch == ConversationMood.neutral) return 'Share how you\'re feeling…';
+    if (activeBranch == ConversationMood.neutral)
+      return 'Share how you\'re feeling…';
     return 'Tell me more…';
   }
 
